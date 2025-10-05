@@ -3,7 +3,15 @@ import type { NextRequest } from "next/server";
 
 const getUserFromAPI = async (token: string) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    // Check if API URL is available
+    if (!apiUrl) {
+      console.error("NEXT_PUBLIC_API_URL is not defined");
+      return { user: null, isAuthenticated: false };
+    }
+
+    const res = await fetch(`${apiUrl}/api/auth/me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -11,11 +19,15 @@ const getUserFromAPI = async (token: string) => {
       cache: "no-store", // ✅ prevent caching user info
     });
 
-    // if (!res.ok) return { user: null, isAuthenticated: false };
+    if (!res.ok) {
+      console.error("API request failed:", res.status, res.statusText);
+      return { user: null, isAuthenticated: false };
+    }
 
     const data = await res.json();
     return { user: data.user, isAuthenticated: true };
-  } catch {
+  } catch (error) {
+    console.error("Error in getUserFromAPI:", error);
     return { user: null, isAuthenticated: false };
   }
 };
